@@ -24,7 +24,10 @@ export function useUpscaler() {
       if (msg.type === 'ready') { setReady(true); setDevice(msg.device); setProgress(null) }
       else if (msg.type === 'progress') setProgress({ loaded: msg.loaded, total: msg.total })
       else if (msg.type === 'tile') pending.current.get(msg.id)?.onTile?.(msg.tilesDone, msg.tilesTotal)
-      else if (msg.type === 'result') { pending.current.get(msg.id)?.resolve(msg.image); pending.current.delete(msg.id) }
+      else if (msg.type === 'result') {
+        const img = new ImageData(new Uint8ClampedArray(msg.buffer), msg.width, msg.height)
+        pending.current.get(msg.id)?.resolve(img); pending.current.delete(msg.id)
+      }
       else if (msg.type === 'error') {
         if (msg.id) { pending.current.get(msg.id)?.reject(new Error(msg.message)); pending.current.delete(msg.id) }
         else { setError(msg.message); setProgress(null) }
@@ -34,10 +37,10 @@ export function useUpscaler() {
     return () => worker.terminate()
   }, [])
 
-  const upscale = useCallback((id: string, image: ImageData, tile: number, overlap: number, onTile?: (d: number, t: number) => void) => {
+  const upscale = useCallback((id: string, image: ImageData, tile: number, overlap: number, finalW: number, finalH: number, onTile?: (d: number, t: number) => void) => {
     return new Promise<ImageData>((resolve, reject) => {
       pending.current.set(id, { resolve, reject, onTile })
-      workerRef.current!.postMessage({ type: 'upscale', id, image, tile, overlap })
+      workerRef.current!.postMessage({ type: 'upscale', id, image, tile, overlap, finalW, finalH })
     })
   }, [])
 

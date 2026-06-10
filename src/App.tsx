@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Maximize2, Sparkles, ShieldCheck, Archive, Loader2 } from 'lucide-react'
 import type { QueueItem, ScaleSetting } from '@/types'
@@ -6,6 +6,7 @@ import { useImageQueue } from '@/hooks/useImageQueue'
 import { useUpscaler } from '@/hooks/useUpscaler'
 import { resolveScale } from '@/lib/scale'
 import { resampleTo } from '@/lib/resample'
+import { drawCapped } from '@/lib/draw'
 import { Dropzone } from '@/components/Dropzone'
 import { ModelLoadingPanel } from '@/components/ModelLoadingPanel'
 import { ScaleControl } from '@/components/ScaleControl'
@@ -20,19 +21,16 @@ const TILE = 256
 const OVERLAP = 16
 
 function FluidImage({ img }: { img: ImageData }) {
+  const ref = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    if (ref.current) void drawCapped(ref.current, img)
+  }, [img])
   return (
     <div
       className="relative mx-auto w-full overflow-hidden rounded-md border"
       style={{ maxWidth: img.width, aspectRatio: `${img.width} / ${img.height}` }}
     >
-      <canvas
-        className="absolute inset-0 h-full w-full"
-        ref={(c) => {
-          if (!c) return
-          c.width = img.width; c.height = img.height
-          c.getContext('2d')!.putImageData(img, 0, 0)
-        }}
-      />
+      <canvas ref={ref} className="absolute inset-0 h-full w-full" />
     </div>
   )
 }
@@ -50,14 +48,15 @@ export default function App() {
     setBusyId(item.id)
     patch(item.id, (it) => ({ ...it, status: 'processing', tilesDone: 0, tilesTotal: 0, error: undefined }))
     try {
-      let native: ImageData
+      let result: ImageData
       if (plan.runModel) {
-        native = await upscale(item.id, item.original, TILE, OVERLAP, (done, total) =>
+        // the worker upscales AND resamples to the final size (off the main thread)
+        result = await upscale(item.id, item.original, TILE, OVERLAP, plan.finalW, plan.finalH, (done, total) =>
           patch(item.id, (it) => ({ ...it, tilesDone: done, tilesTotal: total })))
       } else {
-        native = item.original
+        // downscale-only target: no model; resample the original (small output)
+        result = resampleTo(item.original, plan.finalW, plan.finalH)
       }
-      const result = resampleTo(native, plan.finalW, plan.finalH)
       patch(item.id, (it) => ({ ...it, result, status: 'done' }))
       if (plan.note) toast.message(plan.note)
     } catch (e) {

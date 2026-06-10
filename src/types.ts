@@ -24,11 +24,14 @@ export interface QueueItem {
 
 export type WorkerRequest =
   | { type: 'init' }
-  | { type: 'upscale'; id: string; image: ImageData; tile: number; overlap: number }
+  // finalW/finalH: the worker resamples its ×4 output to this size (off the main
+  // thread) so the main thread never touches the huge full-res buffer.
+  | { type: 'upscale'; id: string; image: ImageData; tile: number; overlap: number; finalW: number; finalH: number }
 
 export type WorkerResponse =
   | { type: 'ready'; device: Device }
   | { type: 'progress'; loaded: number; total: number }                 // model download
   | { type: 'tile'; id: string; tilesDone: number; tilesTotal: number } // inference progress
-  | { type: 'result'; id: string; image: ImageData }                    // native ×4 output
+  // result is sent as a transferable ArrayBuffer (no structured-clone copy)
+  | { type: 'result'; id: string; buffer: ArrayBuffer; width: number; height: number }
   | { type: 'error'; id?: string; message: string }

@@ -1,6 +1,8 @@
+import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import type { QueueItem } from '@/types'
 import { cn } from '@/lib/utils'
+import { drawCapped } from '@/lib/draw'
 
 const STATUS_COLOR: Record<QueueItem['status'], string> = {
   queued: 'bg-muted-foreground/40', processing: 'bg-amber-500', done: 'bg-emerald-500', error: 'bg-destructive',
@@ -25,11 +27,14 @@ export function ImageStrip({ items, activeId, onSelect, onRemove }: {
 }
 
 function ThumbCanvas({ item }: { item: QueueItem }) {
-  return (
-    <canvas className="h-full w-full object-cover" ref={(c) => {
-      if (!c) return
-      c.width = item.width; c.height = item.height
-      c.getContext('2d')!.putImageData(item.original, 0, 0)
-    }} />
-  )
+  const ref = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    // small thumbnail (96px long side, aspect preserved), decoded off the main
+    // thread — not a full-res putImageData. object-cover crops it into the box.
+    const s = 96 / Math.max(item.width, item.height)
+    const w = Math.max(1, Math.round(item.width * s))
+    const h = Math.max(1, Math.round(item.height * s))
+    if (ref.current) void drawCapped(ref.current, item.original, w, h)
+  }, [item.original, item.width, item.height])
+  return <canvas ref={ref} className="h-full w-full object-cover" />
 }

@@ -61,7 +61,7 @@ function toTensor(data: Uint8ClampedArray, pad: number): ort.Tensor {
   return new ort.Tensor('float32', f, [1, 3, pad, pad])
 }
 
-async function upscale(id: string, image: ImageData, tile: number, overlap: number) {
+async function upscale(id: string, image: ImageData, tile: number, overlap: number, finalW: number, finalH: number) {
   if (!session) throw new Error('Model not ready')
   const srcW = image.width, srcH = image.height
   const src = new OffscreenCanvas(srcW, srcH)
@@ -106,13 +106,26 @@ async function upscale(id: string, image: ImageData, tile: number, overlap: numb
     post({ type: 'tile', id, tilesDone: i + 1, tilesTotal: tiles.length })
   }
 
-  post({ type: 'result', id, image: octx.getImageData(0, 0, outW, outH) })
+  // Resample the ×4 output to the requested final size HERE (off the main thread).
+  // For a plain 4× this is a no-op pass-through.
+  let finalCanvas: OffscreenCanvas = out
+  if (finalW !== outW || finalH !== outH) {
+    finalCanvas = new OffscreenCanvas(finalW, finalH)
+    const fctx = finalCanvas.getContext('2d')!
+    fctx.imageSmoothingEnabled = true
+    fctx.imageSmoothingQuality = 'high'
+    fctx.drawImage(out, 0, 0, finalW, finalH)
+  }
+  const finalImage = finalCanvas.getContext('2d')!.getImageData(0, 0, finalW, finalH)
+  const buf = finalImage.data.buffer
+  // transfer the buffer so the main thread doesn't pay a structured-clone copy
+  ;(self as unknown as Worker).postMessage({ type: 'result', id, buffer: buf, width: finalW, height: finalH }, [buf])
 }
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   try {
     if (e.data.type === 'init') await init()
-    else if (e.data.type === 'upscale') await upscale(e.data.id, e.data.image, e.data.tile, e.data.overlap)
+    else if (e.data.type === 'upscale') await upscale(e.data.id, e.data.image, e.data.tile, e.data.overlap, e.data.finalW, e.data.finalH)
   } catch (err) {
     const id = 'id' in e.data ? e.data.id : undefined
     post({ type: 'error', id, message: err instanceof Error ? err.message : 'Upscale failed' })

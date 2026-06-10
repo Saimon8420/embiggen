@@ -1,0 +1,13 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+.vite
+coverage
+
+# Internal planning docs — keep local, never publish
+docs/superpowers/
+
+# onnxruntime-web engine artifacts, copied from node_modules
+public/ort/

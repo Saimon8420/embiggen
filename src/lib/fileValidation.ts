@@ -1,5 +1,5 @@
 export const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
-export const MAX_BYTES = 25 * 1024 * 1024 // 25 MB
+export const MAX_BYTES = 10 * 1024 * 1024 // 10 MB
 
 export type ValidationResult = { ok: true } | { ok: false; reason: string }
 
@@ -8,7 +8,7 @@ export function validateFile(file: File): ValidationResult {
     return { ok: false, reason: 'Unsupported file type. Use PNG, JPG, or WebP.' }
   }
   if (file.size > MAX_BYTES) {
-    return { ok: false, reason: 'File is too large (max 25 MB).' }
+    return { ok: false, reason: 'File is too large (max 10 MB).' }
   }
   return { ok: true }
 }

@@ -17,6 +17,10 @@ import { Button } from '@/components/ui/button'
 
 const TILE = 256
 const OVERLAP = 16
+// Cap the input's long side so the worker's ×4 intermediate stays ≤ ~8192px
+// (matching the output cap). A huge upload is downscaled to this first — keeps
+// memory bounded and loading fast, and upscaling a 20MP photo isn't meaningful.
+const MAX_INPUT_LONG = 2048
 
 type Loaded = { fileName: string; width: number; height: number; original: ImageData }
 type Status = 'idle' | 'processing' | 'done' | 'error'
@@ -50,12 +54,17 @@ export default function App() {
     if (!f) return
     try {
       const bmp = await createImageBitmap(f)
-      const c = new OffscreenCanvas(bmp.width, bmp.height)
+      const s = Math.min(1, MAX_INPUT_LONG / Math.max(bmp.width, bmp.height))
+      const w = Math.max(1, Math.round(bmp.width * s))
+      const h = Math.max(1, Math.round(bmp.height * s))
+      const c = new OffscreenCanvas(w, h)
       const ctx = c.getContext('2d')!
-      ctx.drawImage(bmp, 0, 0)
-      const original = ctx.getImageData(0, 0, bmp.width, bmp.height)
+      if (s < 1) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high' }
+      ctx.drawImage(bmp, 0, 0, w, h)
+      const original = ctx.getImageData(0, 0, w, h)
       bmp.close()
-      setImg({ fileName: f.name, width: original.width, height: original.height, original })
+      if (s < 1) toast.message(`Large image scaled to ${w}×${h} first, then upscaled.`)
+      setImg({ fileName: f.name, width: w, height: h, original })
       setResult(null)
       setStatus('idle')
     } catch {

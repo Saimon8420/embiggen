@@ -20,7 +20,7 @@ export function Dropzone({
       const valid = accepted.filter((f) => validateFile(f).ok)
       const skipped = accepted.length - valid.length + rejections.length
       if (skipped > 0) {
-        toast.error('Some files were skipped — use PNG, JPG, or WebP under 25 MB.')
+        toast.error('Some files were skipped — use PNG, JPG, or WebP under 10 MB.')
       }
       if (valid.length) onFiles(valid)
     },
@@ -55,7 +55,7 @@ export function Dropzone({
         </p>
         {!compact && (
           <p className="mt-0.5 text-sm text-muted-foreground">
-            or click to browse · PNG, JPG, WebP · up to 25 MB
+            or click to browse · PNG, JPG, WebP · up to 10 MB
           </p>
         )}
       </div>

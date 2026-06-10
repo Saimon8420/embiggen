@@ -4,12 +4,13 @@
 // Each tile is padded to a CONSTANT input size (tile + 2*overlap) so the model
 // sees a stable shape every run; the crop never reads the padded area.
 //
-// Execution provider: WASM only. The WebGPU EP fails on this model's ops in
-// onnxruntime-web (it errors mid-run / leaves the session wedged), so we run on
-// multi-threaded WASM — proven correct in the model spike, and fast enough given
-// the model is tiny (~5 MB). Multi-threading needs cross-origin isolation
+// Execution: the PLAIN WASM build (not 'onnxruntime-web/webgpu'). The WebGPU
+// build probes the GPU during init, which can hang in real browsers that have
+// WebGPU, and the WebGPU EP also errors mid-run on this model's ops. The plain
+// build avoids all that — proven correct in the model spike, and fast enough
+// given the model is tiny (~5 MB). Multi-threading needs cross-origin isolation
 // (COOP/COEP), set in vite.config.ts (dev/preview) and vercel.json (prod).
-import * as ort from 'onnxruntime-web/webgpu'
+import * as ort from 'onnxruntime-web'
 import { planTiles } from '../lib/tiling'
 import type { Device, WorkerRequest, WorkerResponse } from '../types'
 

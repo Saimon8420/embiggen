@@ -6,8 +6,7 @@ Live: https://embiggen.vercel.app
 
 ## What it does
 
-- **2× / 4× / target-size** upscaling powered by **Real-ESRGAN** (`realesr-general-x4v3`) running entirely on your device via [onnxruntime-web](https://onnxruntime.ai/) (WebGPU → WASM fallback) in a Web Worker.
-- **Batch queue + ZIP** — load several images, upscale each, export all at once.
+- **2× / 4× / target-size** upscaling powered by **Real-ESRGAN** (`realesr-general-x4v3`) running entirely on your device via [onnxruntime-web](https://onnxruntime.ai/) (multi-threaded WASM) in a Web Worker.
 - **Before/after slider** to compare the original against the result.
 - **PNG / JPG / WebP** export at full resolution.
 - Part of a family of free, private in-browser tools (see the footer).

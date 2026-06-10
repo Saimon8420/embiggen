@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { Maximize2, Sparkles, ShieldCheck, Archive, Loader2 } from 'lucide-react'
-import type { QueueItem, ScaleSetting } from '@/types'
-import { useImageQueue } from '@/hooks/useImageQueue'
+import { Maximize2, Sparkles, ShieldCheck, Loader2, ImagePlus } from 'lucide-react'
+import type { ScaleSetting } from '@/types'
 import { useUpscaler } from '@/hooks/useUpscaler'
 import { resolveScale } from '@/lib/scale'
 import { resampleTo } from '@/lib/resample'
@@ -11,7 +10,6 @@ import { Dropzone } from '@/components/Dropzone'
 import { ModelLoadingPanel } from '@/components/ModelLoadingPanel'
 import { ScaleControl } from '@/components/ScaleControl'
 import { BeforeAfterSlider } from '@/components/BeforeAfterSlider'
-import { ImageStrip } from '@/components/ImageStrip'
 import { ExportBar } from '@/components/ExportBar'
 import { MoreTools } from '@/components/MoreTools'
 import { ModeToggle } from '@/components/mode-toggle'
@@ -19,6 +17,9 @@ import { Button } from '@/components/ui/button'
 
 const TILE = 256
 const OVERLAP = 16
+
+type Loaded = { fileName: string; width: number; height: number; original: ImageData }
+type Status = 'idle' | 'processing' | 'done' | 'error'
 
 function FluidImage({ img }: { img: ImageData }) {
   const ref = useRef<HTMLCanvasElement>(null)
@@ -36,41 +37,48 @@ function FluidImage({ img }: { img: ImageData }) {
 }
 
 export default function App() {
-  const { items, activeId, setActiveId, addFiles, patch, remove } = useImageQueue()
   const { ready, progress, error, upscale } = useUpscaler()
   const [scale, setScale] = useState<ScaleSetting>({ kind: '2x' })
-  const [busyId, setBusyId] = useState<string | null>(null)
+  const [img, setImg] = useState<Loaded | null>(null)
+  const [result, setResult] = useState<ImageData | null>(null)
+  const [status, setStatus] = useState<Status>('idle')
+  const [tiles, setTiles] = useState<{ done: number; total: number }>({ done: 0, total: 0 })
+  const busy = status === 'processing'
 
-  const active = useMemo(() => items.find((i) => i.id === activeId) ?? null, [items, activeId])
-
-  async function upscaleOne(item: QueueItem) {
-    const plan = resolveScale(item.width, item.height, scale)
-    setBusyId(item.id)
-    patch(item.id, (it) => ({ ...it, status: 'processing', tilesDone: 0, tilesTotal: 0, error: undefined }))
+  async function loadFile(files: File[]) {
+    const f = files[0]
+    if (!f) return
     try {
-      let result: ImageData
-      if (plan.runModel) {
-        // the worker upscales AND resamples to the final size (off the main thread)
-        result = await upscale(item.id, item.original, TILE, OVERLAP, plan.finalW, plan.finalH, (done, total) =>
-          patch(item.id, (it) => ({ ...it, tilesDone: done, tilesTotal: total })))
-      } else {
-        // downscale-only target: no model; resample the original (small output)
-        result = resampleTo(item.original, plan.finalW, plan.finalH)
-      }
-      patch(item.id, (it) => ({ ...it, result, status: 'done' }))
-      if (plan.note) toast.message(plan.note)
-    } catch (e) {
-      patch(item.id, (it) => ({ ...it, status: 'error', error: e instanceof Error ? e.message : 'Upscale failed' }))
-      toast.error(`Couldn't upscale ${item.fileName}`)
-    } finally {
-      setBusyId(null)
+      const bmp = await createImageBitmap(f)
+      const c = new OffscreenCanvas(bmp.width, bmp.height)
+      const ctx = c.getContext('2d')!
+      ctx.drawImage(bmp, 0, 0)
+      const original = ctx.getImageData(0, 0, bmp.width, bmp.height)
+      bmp.close()
+      setImg({ fileName: f.name, width: original.width, height: original.height, original })
+      setResult(null)
+      setStatus('idle')
+    } catch {
+      toast.error("Couldn't open that image.")
     }
   }
 
-  async function upscaleAll() {
-    for (const it of items) {
-      if (it.status === 'done') continue
-      await upscaleOne(it)
+  async function doUpscale() {
+    if (!img) return
+    const plan = resolveScale(img.width, img.height, scale)
+    setStatus('processing')
+    setTiles({ done: 0, total: 0 })
+    setResult(null)
+    try {
+      const out = plan.runModel
+        ? await upscale('single', img.original, TILE, OVERLAP, plan.finalW, plan.finalH, (done, total) => setTiles({ done, total }))
+        : resampleTo(img.original, plan.finalW, plan.finalH)
+      setResult(out)
+      setStatus('done')
+      if (plan.note) toast.message(plan.note)
+    } catch (e) {
+      setStatus('error')
+      toast.error(e instanceof Error ? e.message : 'Upscale failed')
     }
   }
 
@@ -97,7 +105,7 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-4 p-4">
-        {items.length === 0 && (
+        {!img && (
           <div className="relative mx-auto max-w-xl space-y-6 py-6 text-center sm:py-14">
             <div
               aria-hidden
@@ -114,7 +122,7 @@ export default function App() {
                 </span>
               </h2>
               <p className="text-muted-foreground">
-                Sharpen and enlarge photos 2× or 4× with AI super-resolution — at full
+                Sharpen and enlarge a photo 2× or 4× with AI super-resolution — at full
                 resolution, 100% in your browser. No upload, no watermark, no signup.
               </p>
             </div>
@@ -124,11 +132,11 @@ export default function App() {
                 <p className="font-medium text-destructive">Couldn’t load the upscaler model</p>
                 <p className="mt-1 text-sm text-muted-foreground">{error}</p>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Check your connection and reload. A WebGPU-capable browser (recent Chrome or Edge) works best.
+                  Check your connection and reload. A recent Chrome or Edge works best.
                 </p>
               </div>
             ) : ready ? (
-              <Dropzone onFiles={addFiles} />
+              <Dropzone onFiles={loadFile} />
             ) : (
               <ModelLoadingPanel progress={progress} />
             )}
@@ -141,70 +149,64 @@ export default function App() {
                 <Maximize2 className="h-4 w-4 text-indigo-500" /> Full resolution
               </span>
               <span className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-muted-foreground">
-                <Archive className="h-4 w-4 text-violet-500" /> Batch + ZIP
+                <Sparkles className="h-4 w-4 text-violet-500" /> No watermark
               </span>
             </div>
           </div>
         )}
 
-        {ready && active && (
+        {ready && img && (
           <>
             <div className="rounded-2xl border bg-card/60 shadow-sm">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-3 py-2.5">
                 <ScaleControl
                   setting={scale} onChange={setScale}
-                  srcW={active.width} srcH={active.height}
-                  disabled={busyId !== null}
+                  srcW={img.width} srcH={img.height}
+                  disabled={busy}
                 />
                 <div className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs text-muted-foreground opacity-60">
                   <Sparkles className="h-3.5 w-3.5" /> Enhance faces
                   <span className="rounded bg-muted px-1 text-[10px] font-medium uppercase">soon</span>
                 </div>
-                <div className="ml-auto flex gap-2">
-                  <Button variant="outline" size="sm" disabled={busyId !== null} onClick={upscaleAll}>
-                    Upscale all
-                  </Button>
-                  <Button size="sm" disabled={busyId !== null} onClick={() => upscaleOne(active)}>
-                    {busyId === active.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Maximize2 className="mr-2 h-4 w-4" />}
-                    {busyId === active.id ? 'Upscaling…' : 'Upscale'}
-                  </Button>
-                </div>
+                <Button className="ml-auto" size="sm" disabled={busy} onClick={doUpscale}>
+                  {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Maximize2 className="mr-2 h-4 w-4" />}
+                  {busy ? 'Upscaling…' : 'Upscale'}
+                </Button>
               </div>
               <div className="bg-[radial-gradient(circle_at_center,theme(colors.muted.DEFAULT)_0%,transparent_70%)] p-4">
                 <div className="relative">
-                  {active.result ? (
-                    <BeforeAfterSlider before={active.original} after={active.result} />
+                  {result ? (
+                    <BeforeAfterSlider before={img.original} after={result} />
                   ) : (
-                    <FluidImage img={active.original} />
+                    <FluidImage img={img.original} />
                   )}
-                  {active.status === 'processing' && (
+                  {busy && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-md bg-background/70 backdrop-blur-sm">
                       <Loader2 className="h-7 w-7 animate-spin text-primary" />
                       <p className="text-sm font-medium">
-                        Upscaling…{active.tilesTotal ? ` tile ${active.tilesDone}/${active.tilesTotal}` : ''}
+                        Upscaling…{tiles.total ? ` tile ${tiles.done}/${tiles.total}` : ''}
                       </p>
                       <div className="h-1 w-40 overflow-hidden rounded-full bg-muted">
                         <div
                           className="h-full bg-primary transition-all"
-                          style={{ width: `${active.tilesTotal ? ((active.tilesDone ?? 0) / active.tilesTotal) * 100 : 0}%` }}
+                          style={{ width: `${tiles.total ? (tiles.done / tiles.total) * 100 : 0}%` }}
                         />
                       </div>
                     </div>
                   )}
                 </div>
                 <p className="mt-3 text-center text-xs text-muted-foreground">
-                  {active.result
-                    ? 'Drag the divider to compare. Download below.'
-                    : 'Pick a scale, then hit Upscale.'}
+                  {result ? 'Drag the divider to compare. Download below.' : 'Pick a scale, then hit Upscale.'}
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <ImageStrip items={items} activeId={activeId} onSelect={setActiveId} onRemove={remove} />
-              <ExportBar active={active} all={items} />
+              <Button variant="outline" size="sm" disabled={busy} onClick={() => { setImg(null); setResult(null); setStatus('idle') }}>
+                <ImagePlus className="mr-2 h-4 w-4" /> New image
+              </Button>
+              <ExportBar result={result} fileName={img.fileName} />
             </div>
-            <Dropzone onFiles={addFiles} compact />
           </>
         )}
       </main>

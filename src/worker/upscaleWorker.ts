@@ -1,0 +1,116 @@
+// Real-ESRGAN ×4 upscaler worker. Runs realesr-general-x4v3 over overlapping
+// tiles so any image size fits in GPU memory; returns the assembled ×4 ImageData.
+// Engine artifacts are served same-origin from /ort/ (copied by scripts/copy-ort-wasm.mjs).
+// Each tile is padded to a CONSTANT input size (tile + 2*overlap) so onnxruntime-web's
+// WebGPU backend sees a stable shape every run; the crop never reads the padded area.
+import * as ort from 'onnxruntime-web/webgpu'
+import { pickDevice } from '../lib/device'
+import { planTiles } from '../lib/tiling'
+import type { Device, WorkerRequest, WorkerResponse } from '../types'
+
+const MODEL_URL = 'https://huggingface.co/OwlMaster/AllFilesRope/resolve/main/realesr-general-x4v3.onnx'
+const SCALE = 4
+ort.env.wasm.wasmPaths = new URL('/ort/', self.location.origin).href
+
+let session: ort.InferenceSession | null = null
+let device: Device = 'wasm'
+
+function post(msg: WorkerResponse) { ;(self as unknown as Worker).postMessage(msg) }
+
+async function fetchModelWithProgress(url: string): Promise<ArrayBuffer> {
+  let res: Response
+  try { res = await fetch(url) }
+  catch { throw new Error('Could not download the AI model — check your connection.') }
+  if (!res.ok || !res.body) throw new Error('Could not download the AI model (server error).')
+  const total = Number(res.headers.get('content-length')) || 0
+  const reader = res.body.getReader()
+  const chunks: Uint8Array[] = []
+  let loaded = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value); loaded += value.length
+    post({ type: 'progress', loaded, total })
+  }
+  const out = new Uint8Array(loaded); let off = 0
+  for (const c of chunks) { out.set(c, off); off += c.length }
+  return out.buffer
+}
+
+async function init() {
+  device = pickDevice(self.navigator)
+  const buf = await fetchModelWithProgress(MODEL_URL)
+  const providers = device === 'webgpu' ? ['webgpu', 'wasm'] : ['wasm']
+  session = await ort.InferenceSession.create(buf, { executionProviders: providers as unknown as string[] })
+  post({ type: 'ready', device })
+}
+
+// A PAD×PAD RGBA buffer → planar CHW float32 [0,1] tensor of shape [1,3,PAD,PAD].
+function toTensor(data: Uint8ClampedArray, pad: number): ort.Tensor {
+  const n = pad * pad
+  const f = new Float32Array(3 * n)
+  for (let i = 0; i < n; i++) {
+    f[i] = data[i * 4] / 255
+    f[n + i] = data[i * 4 + 1] / 255
+    f[2 * n + i] = data[i * 4 + 2] / 255
+  }
+  return new ort.Tensor('float32', f, [1, 3, pad, pad])
+}
+
+async function upscale(id: string, image: ImageData, tile: number, overlap: number) {
+  if (!session) throw new Error('Model not ready')
+  const srcW = image.width, srcH = image.height
+  const src = new OffscreenCanvas(srcW, srcH)
+  src.getContext('2d')!.putImageData(image, 0, 0)
+
+  const outW = srcW * SCALE, outH = srcH * SCALE
+  const out = new OffscreenCanvas(outW, outH)
+  const octx = out.getContext('2d')!
+
+  const pad = tile + 2 * overlap        // constant model input size (e.g. 288)
+  const up = pad * SCALE                // constant model output size (e.g. 1152)
+  const inCanvas = new OffscreenCanvas(pad, pad)
+  const inctx = inCanvas.getContext('2d')!
+
+  const tiles = planTiles(srcW, srcH, tile, overlap, SCALE)
+  const inName = session.inputNames[0]
+  const outName = session.outputNames[0]
+
+  for (let i = 0; i < tiles.length; i++) {
+    const t = tiles[i]
+    // place the (≤pad) source extract at the top-left of a constant pad×pad canvas
+    inctx.clearRect(0, 0, pad, pad)
+    inctx.drawImage(src, t.sx, t.sy, t.sw, t.sh, 0, 0, t.sw, t.sh)
+    const padded = inctx.getImageData(0, 0, pad, pad)
+
+    const result = await session.run({ [inName]: toTensor(padded.data, pad) })
+    const data = result[outName].data as Float32Array
+
+    const n = up * up
+    const rgba = new Uint8ClampedArray(n * 4)
+    for (let p = 0; p < n; p++) {
+      rgba[p * 4] = data[p] * 255
+      rgba[p * 4 + 1] = data[n + p] * 255
+      rgba[p * 4 + 2] = data[2 * n + p] * 255
+      rgba[p * 4 + 3] = 255
+    }
+    const upCanvas = new OffscreenCanvas(up, up)
+    upCanvas.getContext('2d')!.putImageData(new ImageData(rgba, up, up), 0, 0)
+    // crop the core region out of the upscaled padded tile and place it (1:1, no scaling)
+    octx.drawImage(upCanvas, t.cropX, t.cropY, t.dw, t.dh, t.dx, t.dy, t.dw, t.dh)
+
+    post({ type: 'tile', id, tilesDone: i + 1, tilesTotal: tiles.length })
+  }
+
+  post({ type: 'result', id, image: octx.getImageData(0, 0, outW, outH) })
+}
+
+self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
+  try {
+    if (e.data.type === 'init') await init()
+    else if (e.data.type === 'upscale') await upscale(e.data.id, e.data.image, e.data.tile, e.data.overlap)
+  } catch (err) {
+    const id = 'id' in e.data ? e.data.id : undefined
+    post({ type: 'error', id, message: err instanceof Error ? err.message : 'Upscale failed' })
+  }
+}

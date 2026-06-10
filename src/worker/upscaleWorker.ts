@@ -1,10 +1,15 @@
 // Real-ESRGAN ×4 upscaler worker. Runs realesr-general-x4v3 over overlapping
 // tiles so any image size fits in GPU memory; returns the assembled ×4 ImageData.
 // Engine artifacts are served same-origin from /ort/ (copied by scripts/copy-ort-wasm.mjs).
-// Each tile is padded to a CONSTANT input size (tile + 2*overlap) so onnxruntime-web's
-// WebGPU backend sees a stable shape every run; the crop never reads the padded area.
+// Each tile is padded to a CONSTANT input size (tile + 2*overlap) so the model
+// sees a stable shape every run; the crop never reads the padded area.
+//
+// Execution provider: WASM only. The WebGPU EP fails on this model's ops in
+// onnxruntime-web (it errors mid-run / leaves the session wedged), so we run on
+// multi-threaded WASM — proven correct in the model spike, and fast enough given
+// the model is tiny (~5 MB). Multi-threading needs cross-origin isolation
+// (COOP/COEP), set in vite.config.ts (dev/preview) and vercel.json (prod).
 import * as ort from 'onnxruntime-web/webgpu'
-import { pickDevice } from '../lib/device'
 import { planTiles } from '../lib/tiling'
 import type { Device, WorkerRequest, WorkerResponse } from '../types'
 
@@ -13,7 +18,7 @@ const SCALE = 4
 ort.env.wasm.wasmPaths = new URL('/ort/', self.location.origin).href
 
 let session: ort.InferenceSession | null = null
-let device: Device = 'wasm'
+const device: Device = 'wasm'
 
 function post(msg: WorkerResponse) { ;(self as unknown as Worker).postMessage(msg) }
 
@@ -38,10 +43,8 @@ async function fetchModelWithProgress(url: string): Promise<ArrayBuffer> {
 }
 
 async function init() {
-  device = pickDevice(self.navigator)
   const buf = await fetchModelWithProgress(MODEL_URL)
-  const providers = device === 'webgpu' ? ['webgpu', 'wasm'] : ['wasm']
-  session = await ort.InferenceSession.create(buf, { executionProviders: providers as unknown as string[] })
+  session = await ort.InferenceSession.create(buf, { executionProviders: ['wasm'] })
   post({ type: 'ready', device })
 }
 

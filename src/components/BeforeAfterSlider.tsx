@@ -6,7 +6,7 @@ import { drawCapped, cappedSize } from '@/lib/draw'
 // so the left shows the original and the right shows the upscaled result.
 // Both canvases are drawn at the same capped display size (off the main thread
 // via createImageBitmap) so they align and never become a giant on-screen canvas.
-export function BeforeAfterSlider({ before, after }: { before: ImageData; after: ImageData }) {
+export function BeforeAfterSlider({ before, after }: { before: ImageData; after: ImageData | ImageBitmap }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const beforeRef = useRef<HTMLCanvasElement>(null)
   const afterRef = useRef<HTMLCanvasElement>(null)

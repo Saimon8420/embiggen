@@ -6,7 +6,7 @@ const MAX_DISPLAY = 1600
 
 export async function drawCapped(
   canvas: HTMLCanvasElement,
-  img: ImageData,
+  img: ImageData | ImageBitmap,
   dispW?: number,
   dispH?: number,
 ) {

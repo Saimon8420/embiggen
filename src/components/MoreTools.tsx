@@ -1,6 +1,6 @@
-import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, ArrowUpRight, type LucideIcon } from 'lucide-react'
+import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, ArrowUpRight, type LucideIcon } from 'lucide-react'
 
-type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic'
+type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp'
 
 // Single source of truth for the whole tool family. Add new tools here.
 const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: LucideIcon; gradient: string }[] = [
@@ -15,6 +15,7 @@ const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: Luc
   { key: 'snippy', name: 'Snippy', blurb: 'Beautiful code images', url: 'https://snippy-xi.vercel.app', Icon: Code2, gradient: 'from-rose-500 to-orange-500' },
   { key: 'glean', name: 'Glean', blurb: 'Extract text from images', url: 'https://glean-three.vercel.app', Icon: ScanText, gradient: 'from-yellow-500 to-lime-500' },
   { key: 'unheic', name: 'Unheic', blurb: 'Convert HEIC to JPG/PNG', url: 'https://unheic-sigma.vercel.app', Icon: FileImage, gradient: 'from-orange-500 to-amber-500' },
+  { key: 'stamp', name: 'Stamp', blurb: 'Watermark your photos', url: 'https://stamp-henna-omega.vercel.app', Icon: Stamp, gradient: 'from-red-500 to-rose-600' },
 ]
 
 export function MoreTools({ current }: { current: ToolKey }) {

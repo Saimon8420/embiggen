@@ -1,6 +1,6 @@
-import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, ArrowUpRight, type LucideIcon } from 'lucide-react'
+import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ArrowUpRight, type LucideIcon } from 'lucide-react'
 
-type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub'
+type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy'
 
 // Single source of truth for the whole tool family. Add new tools here.
 const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: LucideIcon; gradient: string }[] = [
@@ -12,6 +12,7 @@ const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: Luc
   { key: 'tabby', name: 'Tabby', blurb: 'Generate favicons', url: 'https://tabby-khaki.vercel.app', Icon: AppWindow, gradient: 'from-purple-500 to-indigo-500' },
   { key: 'morph', name: 'Morph', blurb: 'Convert JSON/CSV/YAML', url: 'https://morph-mu.vercel.app', Icon: Braces, gradient: 'from-sky-500 to-blue-500' },
   { key: 'scrub', name: 'Scrub', blurb: 'Strip photo metadata', url: 'https://scrub-delta.vercel.app', Icon: SprayCan, gradient: 'from-emerald-500 to-green-500' },
+  { key: 'snippy', name: 'Snippy', blurb: 'Beautiful code images', url: 'https://snippy-xi.vercel.app', Icon: Code2, gradient: 'from-rose-500 to-orange-500' },
 ]
 
 export function MoreTools({ current }: { current: ToolKey }) {
@@ -24,7 +25,7 @@ export function MoreTools({ current }: { current: ToolKey }) {
         </p>
         {/* Small screens: one horizontal, swipeable scroll row (edge-to-edge).
             Desktop (lg+): a neat grid that wraps as the family grows. */}
-        <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:thin] lg:mx-0 lg:grid lg:grid-cols-7 lg:overflow-visible lg:px-0 lg:pb-0">
+        <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:thin] lg:mx-0 lg:grid lg:grid-cols-8 lg:overflow-visible lg:px-0 lg:pb-0">
           {others.map((t) => (
             <a
               key={t.key}

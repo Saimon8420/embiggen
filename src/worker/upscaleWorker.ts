@@ -12,14 +12,29 @@
 // (COOP/COEP), set in vite.config.ts (dev/preview) and vercel.json (prod).
 import * as ort from 'onnxruntime-web'
 import { planTiles } from '../lib/tiling'
-import type { Device, WorkerRequest, WorkerResponse } from '../types'
+import type { Device, ExportFormat, WorkerRequest, WorkerResponse } from '../types'
 
 const MODEL_URL = 'https://huggingface.co/OwlMaster/AllFilesRope/resolve/main/realesr-general-x4v3.onnx'
 const SCALE = 4
+// Cap for the small display bitmap sent to the main thread (the full-res result
+// stays here in the worker for export).
+const MAX_DISPLAY = 1600
+const MIME: Record<ExportFormat, string> = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' }
 ort.env.wasm.wasmPaths = new URL('/ort/', self.location.origin).href
 
 let session: ort.InferenceSession | null = null
 const device: Device = 'wasm'
+
+// The one full-resolution result we retain (in the WORKER, never on the main
+// thread) so the user can export it without ever materialising a ~268 MB
+// ImageData on the renderer heap. Cleared before each run and on release.
+let lastResult: OffscreenCanvas | null = null
+function releaseResult() { lastResult = null }
+
+function cappedSize(w: number, h: number): { w: number; h: number } {
+  const s = Math.min(1, MAX_DISPLAY / Math.max(w, h))
+  return { w: Math.max(1, Math.round(w * s)), h: Math.max(1, Math.round(h * s)) }
+}
 
 function post(msg: WorkerResponse) { ;(self as unknown as Worker).postMessage(msg) }
 
@@ -63,6 +78,9 @@ function toTensor(data: Uint8ClampedArray, pad: number): ort.Tensor {
 
 async function upscale(id: string, image: ImageData, tile: number, overlap: number, finalW: number, finalH: number) {
   if (!session) throw new Error('Model not ready')
+  // Drop any previously retained result BEFORE allocating this run's output, so
+  // at most one full-res canvas is ever resident.
+  releaseResult()
   const srcW = image.width, srcH = image.height
   const src = new OffscreenCanvas(srcW, srcH)
   src.getContext('2d')!.putImageData(image, 0, 0)
@@ -116,16 +134,34 @@ async function upscale(id: string, image: ImageData, tile: number, overlap: numb
     fctx.imageSmoothingQuality = 'high'
     fctx.drawImage(out, 0, 0, finalW, finalH)
   }
-  const finalImage = finalCanvas.getContext('2d')!.getImageData(0, 0, finalW, finalH)
-  const buf = finalImage.data.buffer
-  // transfer the buffer so the main thread doesn't pay a structured-clone copy
-  ;(self as unknown as Worker).postMessage({ type: 'result', id, buffer: buf, width: finalW, height: finalH }, [buf])
+  // Retain the full-res canvas HERE for export; ship the main thread only a
+  // small, capped display bitmap. This is the crux of the OOM fix — the huge
+  // buffer never crosses to (or accumulates on) the renderer.
+  lastResult = finalCanvas
+  const disp = cappedSize(finalW, finalH)
+  const bitmap = await createImageBitmap(finalCanvas, {
+    resizeWidth: disp.w,
+    resizeHeight: disp.h,
+    resizeQuality: 'high',
+  })
+  ;(self as unknown as Worker).postMessage({ type: 'result', id, bitmap, width: finalW, height: finalH }, [bitmap])
+}
+
+async function exportResult(id: string, format: ExportFormat) {
+  if (!lastResult) throw new Error('Nothing to export yet')
+  const blob = await lastResult.convertToBlob({
+    type: MIME[format],
+    quality: format === 'png' ? undefined : 0.92,
+  })
+  post({ type: 'exported', id, blob })
 }
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   try {
     if (e.data.type === 'init') await init()
     else if (e.data.type === 'upscale') await upscale(e.data.id, e.data.image, e.data.tile, e.data.overlap, e.data.finalW, e.data.finalH)
+    else if (e.data.type === 'export') await exportResult(e.data.id, e.data.format)
+    else if (e.data.type === 'release') releaseResult()
   } catch (err) {
     const id = 'id' in e.data ? e.data.id : undefined
     post({ type: 'error', id, message: err instanceof Error ? err.message : 'Upscale failed' })

@@ -1,6 +1,7 @@
-import { Download, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
+import { Download, ChevronDown, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { downloadImage, type ExportFormat } from '@/lib/export'
+import { type ExportFormat } from '@/lib/export'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -15,18 +16,28 @@ const FORMATS: { value: ExportFormat; label: string; hint: string }[] = [
   { value: 'webp', label: 'WebP', hint: 'Modern · small + sharp' },
 ]
 
-export function ExportBar({ result, fileName }: { result: ImageData | null; fileName: string }) {
+export function ExportBar({
+  disabled,
+  onExport,
+}: {
+  disabled: boolean
+  onExport: (format: ExportFormat) => Promise<void>
+}) {
+  const [saving, setSaving] = useState(false)
+
   async function save(format: ExportFormat) {
-    if (!result) return
-    try { await downloadImage(result, fileName, format) } catch { toast.error('Export failed') }
+    setSaving(true)
+    try { await onExport(format) } catch { toast.error('Export failed') } finally { setSaving(false) }
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={!result} className="w-full justify-center sm:w-auto">
-          <Download className="mr-2 h-4 w-4 shrink-0" />
-          <span className="truncate">Download</span>
+        <Button variant="outline" disabled={disabled || saving} className="w-full justify-center sm:w-auto">
+          {saving
+            ? <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" />
+            : <Download className="mr-2 h-4 w-4 shrink-0" />}
+          <span className="truncate">{saving ? 'Saving…' : 'Download'}</span>
           <ChevronDown className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-60" />
         </Button>
       </DropdownMenuTrigger>

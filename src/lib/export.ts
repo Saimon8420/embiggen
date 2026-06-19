@@ -1,7 +1,8 @@
 import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
+import type { ExportFormat } from '../types'
 
-export type ExportFormat = 'png' | 'jpeg' | 'webp'
+export type { ExportFormat }
 const MIME: Record<ExportFormat, string> = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' }
 const EXT: Record<ExportFormat, string> = { png: 'png', jpeg: 'jpg', webp: 'webp' }
 
@@ -25,6 +26,12 @@ function toBlob(canvas: HTMLCanvasElement, format: ExportFormat): Promise<Blob> 
 
 export async function downloadImage(img: ImageData, baseName: string, format: ExportFormat) {
   const blob = await toBlob(imageDataToCanvas(img), format)
+  saveAs(blob, outName(baseName, format))
+}
+
+// Save a Blob the worker already encoded from the full-res result. Keeps the
+// main thread out of the giant-canvas encode path entirely.
+export function saveResultBlob(blob: Blob, baseName: string, format: ExportFormat) {
   saveAs(blob, outName(baseName, format))
 }
 

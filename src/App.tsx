@@ -6,6 +6,7 @@ import { useUpscaler } from '@/hooks/useUpscaler'
 import { resolveScale } from '@/lib/scale'
 import { resampleTo } from '@/lib/resample'
 import { drawCapped } from '@/lib/draw'
+import { downloadImage, saveResultBlob, type ExportFormat } from '@/lib/export'
 import { Dropzone } from '@/components/Dropzone'
 import { ModelLoadingPanel } from '@/components/ModelLoadingPanel'
 import { ScaleControl } from '@/components/ScaleControl'
@@ -24,6 +25,16 @@ const MAX_INPUT_LONG = 2048
 
 type Loaded = { fileName: string; width: number; height: number; original: ImageData }
 type Status = 'idle' | 'processing' | 'done' | 'error'
+// The result the main thread holds: a small, capped display source only. The
+// full-resolution pixels live in the worker (exported on demand) — except the
+// pure-downscale path, whose result is small and bounded, so we keep it here
+// (`local`) and export it directly.
+type Result = {
+  display: ImageData | ImageBitmap
+  width: number
+  height: number
+  local: ImageData | null
+}
 
 function FluidImage({ img }: { img: ImageData }) {
   const ref = useRef<HTMLCanvasElement>(null)
@@ -41,13 +52,29 @@ function FluidImage({ img }: { img: ImageData }) {
 }
 
 export default function App() {
-  const { ready, progress, error, upscale } = useUpscaler()
+  const { ready, progress, error, upscale, exportResult, release } = useUpscaler()
   const [scale, setScale] = useState<ScaleSetting>({ kind: '2x' })
   const [img, setImg] = useState<Loaded | null>(null)
-  const [result, setResult] = useState<ImageData | null>(null)
+  const [result, setResult] = useState<Result | null>(null)
   const [status, setStatus] = useState<Status>('idle')
   const [tiles, setTiles] = useState<{ done: number; total: number }>({ done: 0, total: 0 })
   const busy = status === 'processing'
+
+  // Swap in a new result, closing the previous display bitmap so old capped
+  // frames don't linger. (The heavy full-res data never lived here.)
+  function replaceResult(next: Result | null) {
+    setResult((prev) => {
+      if (prev && prev.display instanceof ImageBitmap && prev.display !== next?.display) prev.display.close()
+      return next
+    })
+  }
+
+  // Fully reset the current work: drop the display result here and tell the
+  // worker to free its retained full-res canvas.
+  function clearResult() {
+    replaceResult(null)
+    release()
+  }
 
   async function loadFile(files: File[]) {
     const f = files[0]
@@ -65,7 +92,7 @@ export default function App() {
       bmp.close()
       if (s < 1) toast.message(`Large image scaled to ${w}×${h} first, then upscaled.`)
       setImg({ fileName: f.name, width: w, height: h, original })
-      setResult(null)
+      clearResult()
       setStatus('idle')
     } catch {
       toast.error("Couldn't open that image.")
@@ -77,17 +104,32 @@ export default function App() {
     const plan = resolveScale(img.width, img.height, scale)
     setStatus('processing')
     setTiles({ done: 0, total: 0 })
-    setResult(null)
+    replaceResult(null)
     try {
-      const out = plan.runModel
-        ? await upscale('single', img.original, TILE, OVERLAP, plan.finalW, plan.finalH, (done, total) => setTiles({ done, total }))
-        : resampleTo(img.original, plan.finalW, plan.finalH)
-      setResult(out)
+      if (plan.runModel) {
+        const r = await upscale('single', img.original, TILE, OVERLAP, plan.finalW, plan.finalH, (done, total) => setTiles({ done, total }))
+        replaceResult({ display: r.bitmap, width: r.width, height: r.height, local: null })
+      } else {
+        // Pure downscale — small, bounded; keep it on the main thread for export.
+        const data = resampleTo(img.original, plan.finalW, plan.finalH)
+        replaceResult({ display: data, width: data.width, height: data.height, local: data })
+      }
       setStatus('done')
       if (plan.note) toast.message(plan.note)
     } catch (e) {
       setStatus('error')
       toast.error(e instanceof Error ? e.message : 'Upscale failed')
+    }
+  }
+
+  async function handleExport(format: ExportFormat) {
+    if (!result) return
+    const name = img?.fileName ?? 'image'
+    if (result.local) {
+      await downloadImage(result.local, name, format)
+    } else {
+      const blob = await exportResult(format)
+      saveResultBlob(blob, name, format)
     }
   }
 
@@ -185,7 +227,7 @@ export default function App() {
               <div className="bg-[radial-gradient(circle_at_center,theme(colors.muted.DEFAULT)_0%,transparent_70%)] p-4">
                 <div className="relative">
                   {result ? (
-                    <BeforeAfterSlider before={img.original} after={result} />
+                    <BeforeAfterSlider before={img.original} after={result.display} />
                   ) : (
                     <FluidImage img={img.original} />
                   )}
@@ -211,10 +253,10 @@ export default function App() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Button variant="outline" size="sm" disabled={busy} onClick={() => { setImg(null); setResult(null); setStatus('idle') }}>
+              <Button variant="outline" size="sm" disabled={busy} onClick={() => { setImg(null); clearResult(); setStatus('idle') }}>
                 <ImagePlus className="mr-2 h-4 w-4" /> New image
               </Button>
-              <ExportBar result={result} fileName={img.fileName} />
+              <ExportBar disabled={!result || busy} onExport={handleExport} />
             </div>
           </>
         )}

@@ -1,6 +1,6 @@
-import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, Spline, ScanFace, FileSignature, Activity, AlignLeft, MessageCircleQuestion, FileSearch, CopyCheck, Sticker, ArrowUpRight, type LucideIcon } from 'lucide-react'
+import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, Spline, ScanFace, FileSignature, Activity, AlignLeft, MessageCircleQuestion, FileSearch, CopyCheck, Sticker, MessagesSquare, ArrowUpRight, type LucideIcon } from 'lucide-react'
 
-type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp' | 'vexel' | 'smudge' | 'quill' | 'pulse' | 'crux' | 'askdoc' | 'sift' | 'doppel' | 'sticka'
+type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp' | 'vexel' | 'smudge' | 'quill' | 'pulse' | 'crux' | 'askdoc' | 'sift' | 'doppel' | 'sticka' | 'chirp'
 
 // Single source of truth for the whole tool family. Add new tools here.
 const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: LucideIcon; gradient: string }[] = [
@@ -25,6 +25,7 @@ const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: Luc
   { key: 'sift', name: 'Sift', blurb: 'Search files by meaning', url: 'https://sift-henna.vercel.app', Icon: FileSearch, gradient: 'from-slate-500 to-blue-500' },
   { key: 'doppel', name: 'Doppel', blurb: 'Find duplicate photos', url: 'https://doppel-ten.vercel.app', Icon: CopyCheck, gradient: 'from-pink-500 to-rose-500' },
   { key: 'sticka', name: 'Sticka', blurb: 'Make chat stickers', url: 'https://sticka-henna.vercel.app', Icon: Sticker, gradient: 'from-teal-500 to-cyan-500' },
+  { key: 'chirp', name: 'Chirp', blurb: 'Beautify tweets & chats', url: 'https://chirp-kappa-gray.vercel.app', Icon: MessagesSquare, gradient: 'from-sky-500 to-blue-600' },
 ]
 
 export function MoreTools({ current }: { current: ToolKey }) {

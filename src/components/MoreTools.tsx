@@ -1,6 +1,6 @@
-import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, Spline, ScanFace, FileSignature, Activity, AlignLeft, MessageCircleQuestion, FileSearch, CopyCheck, Sticker, MessagesSquare, QrCode, ArrowUpRight, type LucideIcon } from 'lucide-react'
+import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, Spline, ScanFace, FileSignature, Activity, AlignLeft, MessageCircleQuestion, FileSearch, CopyCheck, Sticker, MessagesSquare, QrCode, Minimize2, ArrowUpRight, type LucideIcon } from 'lucide-react'
 
-type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp' | 'vexel' | 'smudge' | 'quill' | 'pulse' | 'crux' | 'askdoc' | 'sift' | 'doppel' | 'sticka' | 'chirp' | 'qrio'
+type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp' | 'vexel' | 'smudge' | 'quill' | 'pulse' | 'crux' | 'askdoc' | 'sift' | 'doppel' | 'sticka' | 'chirp' | 'qrio' | 'squish'
 
 // Single source of truth for the whole tool family. Add new tools here.
 const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: LucideIcon; gradient: string }[] = [
@@ -27,6 +27,7 @@ const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: Luc
   { key: 'sticka', name: 'Sticka', blurb: 'Make chat stickers', url: 'https://sticka-henna.vercel.app', Icon: Sticker, gradient: 'from-teal-500 to-cyan-500' },
   { key: 'chirp', name: 'Chirp', blurb: 'Beautify tweets & chats', url: 'https://chirp-kappa-gray.vercel.app', Icon: MessagesSquare, gradient: 'from-sky-500 to-blue-600' },
   { key: 'qrio', name: 'Qrio', blurb: 'Custom QR codes', url: 'https://qrio-alpha.vercel.app', Icon: QrCode, gradient: 'from-violet-500 to-purple-600' },
+  { key: 'squish', name: 'Squish', blurb: 'Compress images', url: 'https://squish-nine.vercel.app', Icon: Minimize2, gradient: 'from-lime-500 to-emerald-500' },
 ]
 
 export function MoreTools({ current }: { current: ToolKey }) {

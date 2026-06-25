@@ -1,6 +1,6 @@
-import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, Spline, ScanFace, FileSignature, Activity, AlignLeft, MessageCircleQuestion, FileSearch, CopyCheck, Sticker, MessagesSquare, QrCode, Minimize2, MonitorSmartphone, Quote, ListOrdered, ReceiptText, Image as ImageIcon, Cloud, SquareStack, PenLine, ArrowUpRight, type LucideIcon } from 'lucide-react'
+import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, Spline, ScanFace, FileSignature, Activity, AlignLeft, MessageCircleQuestion, FileSearch, CopyCheck, Sticker, MessagesSquare, QrCode, Minimize2, MonitorSmartphone, Quote, ListOrdered, ReceiptText, Image as ImageIcon, Cloud, SquareStack, PenLine, Grid3x3, ArrowUpRight, type LucideIcon } from 'lucide-react'
 
-type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp' | 'vexel' | 'smudge' | 'quill' | 'pulse' | 'crux' | 'askdoc' | 'sift' | 'doppel' | 'sticka' | 'chirp' | 'qrio' | 'squish' | 'bezel' | 'quotely' | 'tierly' | 'billd' | 'ogle' | 'wordly' | 'flippy' | 'inkly'
+type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp' | 'vexel' | 'smudge' | 'quill' | 'pulse' | 'crux' | 'askdoc' | 'sift' | 'doppel' | 'sticka' | 'chirp' | 'qrio' | 'squish' | 'bezel' | 'quotely' | 'tierly' | 'billd' | 'ogle' | 'wordly' | 'flippy' | 'inkly' | 'wordsy'
 
 // Single source of truth for the whole tool family. Add new tools here.
 const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: LucideIcon; gradient: string }[] = [
@@ -36,6 +36,7 @@ const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: Luc
   { key: 'wordly', name: 'Wordly', blurb: 'Make word clouds', url: 'https://wordly-nu.vercel.app', Icon: Cloud, gradient: 'from-teal-500 to-emerald-600' },
   { key: 'flippy', name: 'Flippy', blurb: 'Flashcards & quizzes', url: 'https://flippy-rose-theta.vercel.app', Icon: SquareStack, gradient: 'from-violet-500 to-indigo-600' },
   { key: 'inkly', name: 'Inkly', blurb: 'Handwriting to font', url: 'https://inkly-weld-psi.vercel.app', Icon: PenLine, gradient: 'from-sky-500 to-cyan-500' },
+  { key: 'wordsy', name: 'Wordsy', blurb: 'Word-search puzzles', url: 'https://wordsy-pi.vercel.app', Icon: Grid3x3, gradient: 'from-purple-600 to-pink-500' },
 ]
 
 export function MoreTools({ current }: { current: ToolKey }) {

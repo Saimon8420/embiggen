@@ -1,6 +1,6 @@
-import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, Spline, ScanFace, FileSignature, Activity, AlignLeft, MessageCircleQuestion, FileSearch, CopyCheck, Sticker, MessagesSquare, QrCode, Minimize2, MonitorSmartphone, Quote, ListOrdered, ReceiptText, Image as ImageIcon, Cloud, SquareStack, PenLine, Grid3x3, Palette, LayoutGrid, ArrowUpRight, type LucideIcon } from 'lucide-react'
+import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, Spline, ScanFace, FileSignature, Activity, AlignLeft, MessageCircleQuestion, FileSearch, CopyCheck, Sticker, MessagesSquare, QrCode, Minimize2, MonitorSmartphone, Quote, ListOrdered, ReceiptText, Image as ImageIcon, Cloud, SquareStack, PenLine, Grid3x3, Palette, LayoutGrid, SwatchBook, ArrowUpRight, type LucideIcon } from 'lucide-react'
 
-type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp' | 'vexel' | 'smudge' | 'quill' | 'pulse' | 'crux' | 'askdoc' | 'sift' | 'doppel' | 'sticka' | 'chirp' | 'qrio' | 'squish' | 'bezel' | 'quotely' | 'tierly' | 'billd' | 'ogle' | 'wordly' | 'flippy' | 'inkly' | 'wordsy' | 'hue' | 'crossly'
+type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp' | 'vexel' | 'smudge' | 'quill' | 'pulse' | 'crux' | 'askdoc' | 'sift' | 'doppel' | 'sticka' | 'chirp' | 'qrio' | 'squish' | 'bezel' | 'quotely' | 'tierly' | 'billd' | 'ogle' | 'wordly' | 'flippy' | 'inkly' | 'wordsy' | 'hue' | 'crossly' | 'hueology'
 
 // Single source of truth for the whole tool family. Add new tools here.
 const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: LucideIcon; gradient: string }[] = [
@@ -39,6 +39,7 @@ const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: Luc
   { key: 'wordsy', name: 'Wordsy', blurb: 'Word-search puzzles', url: 'https://wordsy-pi.vercel.app', Icon: Grid3x3, gradient: 'from-purple-600 to-pink-500' },
   { key: 'hue', name: 'Hue', blurb: 'Photos to coloring pages', url: 'https://hue-lyart.vercel.app', Icon: Palette, gradient: 'from-fuchsia-600 to-amber-500' },
   { key: 'crossly', name: 'Crossly', blurb: 'Make crossword puzzles', url: 'https://crossly-smoky.vercel.app', Icon: LayoutGrid, gradient: 'from-sky-600 to-indigo-600' },
+  { key: 'hueology', name: 'Hueology', blurb: 'Color palettes from anything', url: 'https://hueology.vercel.app', Icon: SwatchBook, gradient: 'from-fuchsia-600 to-cyan-500' },
 ]
 
 export function MoreTools({ current }: { current: ToolKey }) {

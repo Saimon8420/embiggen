@@ -127,8 +127,15 @@ export function ToolsDialogContent({ current }: { current: string }) {
         )}
       </div>
       <div className="flex flex-none items-center justify-between gap-3 border-t px-4 py-2.5 text-[12px] text-muted-foreground sm:px-6">
-        <span>Free · Private · In-browser</span>
-        <span className="hidden sm:inline">Esc to close</span>
+        <span className="inline-flex items-center gap-1.5">
+          Every tool here is free, by
+          <a href="https://doetra.com" className="inline-flex items-center gap-1 font-semibold text-foreground hover:underline">
+            <img src={`${import.meta.env.BASE_URL}doetra-mark.png`} alt="" width={14} height={14} className="h-3.5 w-3.5" /> Doetra
+          </a>
+        </span>
+        <a href="https://doetra.com/free-tools/" className="font-semibold text-foreground hover:underline">
+          All free tools →
+        </a>
       </div>
     </DialogContent>
   )

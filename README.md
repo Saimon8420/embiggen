@@ -1,8 +1,19 @@
 # Embiggen
 
-**Upscale any image — in your browser.** Free, private AI super-resolution. No upload, no watermark, no signup, no resolution caps.
+**Make small images big and sharp.** A free tool by [Doetra](https://doetra.com). Enlarge a photo 2× or 4× (or to an exact size) with AI super-resolution — full-resolution download, no watermark, no credits. Nothing is uploaded: the AI runs in your browser.
 
-Live: https://embiggen.vercel.app
+Live: https://doetra.com/image-upscaler — pre-rendered start pages `/`, `/increase-image-resolution`, `/upscale-image-4x`; the tool is at `/image-upscaler/editor`.
+
+## Pro features, free
+
+| Feature | Usually | Embiggen |
+|---|---|---|
+| **4× upscaling** | Free plans stop at 2× | ✓ Free |
+| **Full-resolution download** — up to 8192 px | Free: preview size only | ✓ Free |
+| **No watermark** | Watermark on free images | ✓ Free |
+| **No credits** | 3–10 credits a month, then $9–20/mo | ✓ Free |
+| **Exact output size** | Pro feature | ✓ Free |
+| **Nothing uploaded** | Your photo goes to their servers | ✓ Free |
 
 ## What it does
 

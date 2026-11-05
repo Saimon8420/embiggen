@@ -20,7 +20,7 @@ const SCALE = 4
 // stays here in the worker for export).
 const MAX_DISPLAY = 1600
 const MIME: Record<ExportFormat, string> = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' }
-ort.env.wasm.wasmPaths = new URL('/ort/', self.location.origin).href
+ort.env.wasm.wasmPaths = new URL(`${import.meta.env.BASE_URL}ort/`, self.location.origin).href
 
 let session: ort.InferenceSession | null = null
 const device: Device = 'wasm'

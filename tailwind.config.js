@@ -9,6 +9,10 @@ export default {
       screens: { '2xl': '1400px' },
     },
     extend: {
+      fontFamily: {
+        sans: ['"Geist Variable"', 'system-ui', 'sans-serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'monospace'],
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
@@ -18,6 +22,7 @@ export default {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        brand: { DEFAULT: 'hsl(var(--brand))', soft: 'hsl(var(--brand-soft))', ink: 'hsl(var(--brand-ink))', lime: 'hsl(var(--brand-lime))' },
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {

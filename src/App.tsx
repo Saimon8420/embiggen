@@ -1,20 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { Maximize2, Sparkles, ShieldCheck, Loader2, ImagePlus } from 'lucide-react'
+import { Maximize2, Sparkles, Loader2, ImagePlus } from 'lucide-react'
 import type { ScaleSetting } from '@/types'
 import { useUpscaler } from '@/hooks/useUpscaler'
 import { resolveScale } from '@/lib/scale'
 import { resampleTo } from '@/lib/resample'
 import { drawCapped } from '@/lib/draw'
 import { downloadImage, saveResultBlob, type ExportFormat } from '@/lib/export'
-import { Dropzone } from '@/components/Dropzone'
-import { ModelLoadingPanel } from '@/components/ModelLoadingPanel'
 import { ScaleControl } from '@/components/ScaleControl'
 import { BeforeAfterSlider } from '@/components/BeforeAfterSlider'
 import { ExportBar } from '@/components/ExportBar'
-import { MoreTools } from '@/components/MoreTools'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
+import { Lockup } from '@/components/Brand'
+import { FreeHere } from '@/components/FreeHere'
+import { ToolsButton } from '@/components/ToolsDialog'
+import { StartPage } from '@/components/StartPage'
+import { SiteFooter } from '@/components/SiteFooter'
+import { asset } from '@/lib/asset'
+import { BASE, EDITOR_SLUG, PAGES, type Slug } from '@/lib/site'
 
 const TILE = 256
 const OVERLAP = 16
@@ -44,16 +48,39 @@ function FluidImage({ img }: { img: ImageData }) {
   return (
     <div
       className="relative mx-auto w-full overflow-hidden rounded-md border"
-      style={{ maxWidth: img.width, aspectRatio: `${img.width} / ${img.height}` }}
+      style={{ maxWidth: Math.max(img.width, 520), aspectRatio: `${img.width} / ${img.height}` }}
     >
       <canvas ref={ref} className="absolute inset-0 h-full w-full" />
     </div>
   )
 }
 
-export default function App() {
+export default function App({ initialSlug }: { initialSlug: Slug | typeof EDITOR_SLUG }) {
+  const [slug, setSlug] = useState<Slug>(initialSlug === EDITOR_SLUG ? '' : initialSlug)
+  const page = PAGES.find((p) => p.slug === slug) ?? PAGES[0]
+  const [view, setView] = useState<'start' | 'editor'>('start')
   const { ready, progress, error, upscale, exportResult, release } = useUpscaler()
-  const [scale, setScale] = useState<ScaleSetting>({ kind: '2x' })
+  const [scale, setScale] = useState<ScaleSetting>({ kind: page.scale })
+
+  useEffect(() => {
+    if (initialSlug === EDITOR_SLUG) history.replaceState(null, '', asset('/'))
+    const onPop = () => {
+      const rest = location.pathname.replace(/\/+$/, '').split(BASE)[1]?.replace(/^\//, '') ?? ''
+      if (rest !== EDITOR_SLUG) {
+        setView('start')
+        setSlug((PAGES.find((p) => p.slug === rest)?.slug ?? '') as Slug)
+      }
+    }
+    addEventListener('popstate', onPop)
+    return () => removeEventListener('popstate', onPop)
+  }, [initialSlug])
+
+  const goStart = (s: Slug) => {
+    setView('start')
+    setSlug(s)
+    history.pushState(null, '', asset(s ? `/${s}` : '/'))
+    scrollTo(0, 0)
+  }
   const [img, setImg] = useState<Loaded | null>(null)
   const [result, setResult] = useState<Result | null>(null)
   const [status, setStatus] = useState<Status>('idle')
@@ -94,6 +121,9 @@ export default function App() {
       setImg({ fileName: f.name, width: w, height: h, original })
       clearResult()
       setStatus('idle')
+      setView('editor')
+      history.pushState(null, '', asset(`/${EDITOR_SLUG}`))
+      scrollTo(0, 0)
     } catch {
       toast.error("Couldn't open that image.")
     }
@@ -133,136 +163,98 @@ export default function App() {
     }
   }
 
+  const pct = progress && progress.total ? Math.round((progress.loaded / progress.total) * 100) : null
+  const aiChip = error ? (
+    <span className="hidden text-[12px] font-semibold text-destructive sm:inline">AI failed to load</span>
+  ) : !ready ? (
+    <span className="hidden items-center gap-1.5 text-[12px] font-semibold text-muted-foreground sm:inline-flex" aria-live="polite">
+      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading AI{pct !== null && pct < 100 ? ` ${pct}%` : '…'}
+    </span>
+  ) : (
+    <span className="hidden items-center gap-1.5 text-[12px] font-semibold text-emerald-700 sm:inline-flex dark:text-emerald-400">
+      <Sparkles className="h-3.5 w-3.5" /> AI ready
+    </span>
+  )
+
+  const openSample = async () => {
+    const blob = await (await fetch(asset('/examples/sample.jpg'))).blob()
+    setScale({ kind: '4x' })
+    void loadFile([new File([blob], 'sample-portrait.jpg', { type: 'image/jpeg' })])
+  }
+
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-background via-background to-muted/30">
-      <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25">
-              <Maximize2 className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold leading-tight tracking-tight">Embiggen</h1>
-              <p className="text-xs text-muted-foreground">Upscale any image — in your browser</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="hidden items-center gap-1.5 rounded-full border bg-background px-3 py-1 text-xs text-muted-foreground sm:flex">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> 100% private — nothing leaves your device
-            </span>
-            <ModeToggle />
-          </div>
-        </div>
+    <div className="flex min-h-dvh flex-col bg-background text-foreground">
+      <header className="sticky top-0 z-30 flex h-14 flex-none items-center gap-1.5 border-b bg-card/90 px-3 backdrop-blur-md sm:gap-2 sm:px-4">
+        <Lockup onHome={(e) => (e.preventDefault(), goStart(''))} />
+        {view === 'editor' && img && <span className="ml-2 hidden min-w-0 max-w-[30ch] truncate text-[13.5px] font-semibold md:block">{img.fileName}</span>}
+        <span className="flex-1" />
+        {aiChip}
+        <FreeHere product="Embiggen" className="hidden md:inline-flex" />
+        <ToolsButton current="embiggen" />
+        <ModeToggle />
+        {view === 'start' && (
+          <button
+            type="button"
+            onClick={() => document.querySelector<HTMLInputElement>('main input[type=file]')?.click()}
+            className="ml-0.5 hidden h-9 flex-none items-center rounded-[11px] bg-foreground px-3.5 text-[13px] font-semibold text-background transition-opacity hover:opacity-90 sm:flex"
+          >
+            Open an image
+          </button>
+        )}
       </header>
 
-      <main className="mx-auto max-w-5xl space-y-4 p-4">
-        {!img && (
-          <div className="relative mx-auto max-w-xl space-y-6 py-6 text-center sm:py-14">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-0 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-gradient-to-br from-indigo-500/20 to-violet-500/20 blur-3xl"
-            />
-            <div className="space-y-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300">
-                <Sparkles className="h-3.5 w-3.5" /> Free · Private · In-browser AI
-              </span>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                Upscale any{' '}
-                <span className="bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">
-                  image
-                </span>
-              </h2>
-              <p className="text-muted-foreground">
-                Sharpen and enlarge a photo 2× or 4× with AI super-resolution — at full
-                resolution, 100% in your browser. No upload, no watermark, no signup.
+      {view === 'start' || !img ? (
+        <>
+          <StartPage page={page} onFiles={(f) => void loadFile(f)} onSample={() => void openSample()} />
+          <SiteFooter />
+        </>
+      ) : (
+        <main className="mx-auto w-full max-w-5xl flex-1 space-y-4 p-3 sm:p-5">
+          <div className="rounded-[18px] bg-card shadow-[0_0_0_1px_hsl(var(--border))]">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-3 py-2.5">
+              <ScaleControl setting={scale} onChange={setScale} srcW={img.width} srcH={img.height} disabled={busy} />
+              <Button className="ml-auto h-10 rounded-[11px] bg-[#073049] px-4 font-bold text-white hover:bg-[#073049]/90 dark:bg-brand" disabled={busy || !ready} onClick={doUpscale}>
+                {busy || !ready ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Maximize2 className="mr-2 h-4 w-4" />}
+                {!ready ? 'Loading AI…' : busy ? 'Upscaling…' : 'Upscale'}
+              </Button>
+            </div>
+            <div className="bg-[hsl(var(--stage))] p-3 sm:p-5">
+              <div className="relative">
+                {result ? <BeforeAfterSlider before={img.original} after={result.display} /> : <FluidImage img={img.original} />}
+                {busy && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-md bg-background/70 backdrop-blur-sm" aria-live="polite">
+                    <Loader2 className="h-7 w-7 animate-spin text-brand" />
+                    <p className="text-sm font-medium">Upscaling…{tiles.total ? ` tile ${tiles.done}/${tiles.total}` : ''}</p>
+                    <div className="h-1 w-40 overflow-hidden rounded-full bg-muted">
+                      <div className="h-full bg-brand transition-all" style={{ width: `${tiles.total ? (tiles.done / tiles.total) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                {result ? `${img.width}×${img.height} → ${result.width}×${result.height}. Drag the divider to compare.` : error ? `Couldn’t load the upscaler: ${error}` : 'Pick a scale, then hit Upscale.'}
               </p>
             </div>
-
-            {error ? (
-              <div className="mx-auto max-w-md rounded-lg border border-destructive/40 bg-destructive/5 p-6 text-center">
-                <p className="font-medium text-destructive">Couldn’t load the upscaler model</p>
-                <p className="mt-1 text-sm text-muted-foreground">{error}</p>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Check your connection and reload. A recent Chrome or Edge works best.
-                </p>
-              </div>
-            ) : ready ? (
-              <Dropzone onFiles={loadFile} />
-            ) : (
-              <ModelLoadingPanel progress={progress} />
-            )}
-
-            <div className="flex flex-wrap items-center justify-center gap-2.5 text-sm">
-              <span className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-muted-foreground">
-                <ShieldCheck className="h-4 w-4 text-emerald-500" /> No upload
-              </span>
-              <span className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-muted-foreground">
-                <Maximize2 className="h-4 w-4 text-indigo-500" /> Full resolution
-              </span>
-              <span className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-muted-foreground">
-                <Sparkles className="h-4 w-4 text-violet-500" /> No watermark
-              </span>
-            </div>
           </div>
-        )}
-
-        {ready && img && (
-          <>
-            <div className="rounded-2xl border bg-card/60 shadow-sm">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-3 py-2.5">
-                <ScaleControl
-                  setting={scale} onChange={setScale}
-                  srcW={img.width} srcH={img.height}
-                  disabled={busy}
-                />
-                <div className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs text-muted-foreground opacity-60">
-                  <Sparkles className="h-3.5 w-3.5" /> Enhance faces
-                  <span className="rounded bg-muted px-1 text-[10px] font-medium uppercase">soon</span>
-                </div>
-                <Button className="ml-auto" size="sm" disabled={busy} onClick={doUpscale}>
-                  {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Maximize2 className="mr-2 h-4 w-4" />}
-                  {busy ? 'Upscaling…' : 'Upscale'}
-                </Button>
-              </div>
-              <div className="bg-[radial-gradient(circle_at_center,theme(colors.muted.DEFAULT)_0%,transparent_70%)] p-4">
-                <div className="relative">
-                  {result ? (
-                    <BeforeAfterSlider before={img.original} after={result.display} />
-                  ) : (
-                    <FluidImage img={img.original} />
-                  )}
-                  {busy && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-md bg-background/70 backdrop-blur-sm">
-                      <Loader2 className="h-7 w-7 animate-spin text-primary" />
-                      <p className="text-sm font-medium">
-                        Upscaling…{tiles.total ? ` tile ${tiles.done}/${tiles.total}` : ''}
-                      </p>
-                      <div className="h-1 w-40 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full bg-primary transition-all"
-                          style={{ width: `${tiles.total ? (tiles.done / tiles.total) * 100 : 0}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <p className="mt-3 text-center text-xs text-muted-foreground">
-                  {result ? 'Drag the divider to compare. Download below.' : 'Pick a scale, then hit Upscale.'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Button variant="outline" size="sm" disabled={busy} onClick={() => { setImg(null); clearResult(); setStatus('idle') }}>
-                <ImagePlus className="mr-2 h-4 w-4" /> New image
-              </Button>
-              <ExportBar disabled={!result || busy} onExport={handleExport} />
-            </div>
-          </>
-        )}
-      </main>
-
-      <MoreTools current="embiggen" />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10"
+              disabled={busy}
+              onClick={() => {
+                setImg(null)
+                clearResult()
+                setStatus('idle')
+                goStart(slug)
+              }}
+            >
+              <ImagePlus className="mr-2 h-4 w-4" /> New image
+            </Button>
+            <ExportBar disabled={!result || busy} onExport={handleExport} />
+          </div>
+        </main>
+      )}
     </div>
   )
 }

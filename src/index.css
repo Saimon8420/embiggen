@@ -4,48 +4,60 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 200 14% 97%;
+    --foreground: 205 33% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 205 33% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 262 83% 58%;
+    --popover-foreground: 205 33% 12%;
+    --primary: 205 33% 12%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 262 83% 96%;
-    --accent-foreground: 262 60% 30%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 262 83% 58%;
-    --radius: 0.5rem;
+    --secondary: 200 12% 94%;
+    --secondary-foreground: 205 33% 12%;
+    --muted: 200 12% 94%;
+    --muted-foreground: 205 8% 42%;
+    --accent: 199 70% 95%;
+    --accent-foreground: 201 80% 27%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 200 12% 89%;
+    --input: 200 10% 84%;
+    --ring: 197 78% 42%;
+    --radius: 0.75rem;
+    --brand: 197 78% 42%;
+    --brand-soft: 197 80% 95%;
+    --brand-ink: 201 80% 27%;
+    --brand-lime: 195 79% 52%;
+    --stage: 200 14% 94.5%;
+    --check: 200 10% 91%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 263 70% 64%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 263 40% 24%;
-    --accent-foreground: 263 80% 90%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 263 70% 64%;
+    --background: 205 25% 7%;
+    --foreground: 200 15% 93%;
+    --card: 205 22% 10%;
+    --card-foreground: 200 15% 93%;
+    --popover: 205 22% 11%;
+    --popover-foreground: 200 15% 93%;
+    --primary: 200 15% 93%;
+    --primary-foreground: 205 25% 9%;
+    --secondary: 205 16% 15%;
+    --secondary-foreground: 200 15% 93%;
+    --muted: 205 16% 15%;
+    --muted-foreground: 200 8% 63%;
+    --accent: 200 50% 14%;
+    --accent-foreground: 195 80% 72%;
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 205 14% 18%;
+    --input: 205 12% 23%;
+    --ring: 195 79% 52%;
+    --brand: 195 79% 52%;
+    --brand-soft: 200 50% 14%;
+    --brand-ink: 195 80% 72%;
+    --brand-lime: 195 79% 60%;
+    --stage: 205 22% 8.5%;
+    --check: 205 14% 13%;
   }
 }
 
@@ -53,7 +65,55 @@
   * {
     @apply border-border;
   }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'ss01';
+  }
+  button,
+  [role='button'],
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: default;
+  }
+}
+
+@layer components {
+  /* Doetra display type for the start pages; the italic accent overhangs, so give it room */
+  .display-serif {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+  }
+  .display-serif em {
+    padding-inline-end: 0.08em;
+  }
+  /* checkerboard behind images so transparency shows */
+  .checker {
+    background-color: hsl(var(--card));
+    background-image: conic-gradient(hsl(var(--check)) 25%, transparent 0 50%, hsl(var(--check)) 0 75%, transparent 0);
+    background-size: 16px 16px;
+  }
+  .seg {
+    @apply grid gap-0.5 rounded-[10px] bg-muted p-[3px];
+  }
+  .seg > button {
+    @apply h-8 whitespace-nowrap rounded-[8px] px-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  .seg > button[aria-pressed='true'] {
+    @apply bg-card text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12)] dark:bg-secondary dark:shadow-[0_0_0_1px_hsl(var(--border))];
+  }
+  .pill-btn {
+    @apply h-[30px] rounded-full px-3 text-[12.5px] font-semibold text-foreground/80 shadow-[inset_0_0_0_1px_hsl(var(--input))] transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  .pill-btn[aria-pressed='true'] {
+    @apply bg-foreground text-background shadow-none hover:bg-foreground;
+  }
+  .eyebrow {
+    @apply text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-muted-foreground;
   }
 }

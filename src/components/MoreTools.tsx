@@ -1,46 +1,48 @@
-import { Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, Spline, ScanFace, FileSignature, Activity, AlignLeft, MessageCircleQuestion, FileSearch, CopyCheck, Sticker, MessagesSquare, QrCode, Minimize2, MonitorSmartphone, Quote, ListOrdered, ReceiptText, Image as ImageIcon, Cloud, SquareStack, PenLine, Grid3x3, Palette, LayoutGrid, SwatchBook, Laugh, ArrowUpRight, type LucideIcon } from 'lucide-react'
+import { IdCard, Wand2, Captions, Sparkles, Maximize2, AudioLines, AppWindow, Braces, SprayCan, Code2, ScanText, FileImage, Stamp, Spline, ScanFace, FileSignature, Activity, AlignLeft, MessageCircleQuestion, FileSearch, CopyCheck, Sticker, MessagesSquare, QrCode, Minimize2, MonitorSmartphone, Quote, ListOrdered, ReceiptText, Image as ImageIcon, Cloud, SquareStack, PenLine, Grid3x3, Palette, LayoutGrid, SwatchBook, Laugh, ArrowUpRight, type LucideIcon } from 'lucide-react'
 
-type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp' | 'vexel' | 'smudge' | 'quill' | 'pulse' | 'crux' | 'askdoc' | 'sift' | 'doppel' | 'sticka' | 'chirp' | 'qrio' | 'squish' | 'bezel' | 'quotely' | 'tierly' | 'billd' | 'ogle' | 'wordly' | 'flippy' | 'inkly' | 'wordsy' | 'hue' | 'crossly' | 'hueology' | 'memely'
+type ToolKey = 'poof' | 'capsy' | 'vanish' | 'embiggen' | 'aloud' | 'tabby' | 'morph' | 'scrub' | 'snippy' | 'glean' | 'unheic' | 'stamp' | 'vexel' | 'smudge' | 'quill' | 'pulse' | 'crux' | 'askdoc' | 'sift' | 'doppel' | 'sticka' | 'chirp' | 'qrio' | 'squish' | 'bezel' | 'quotely' | 'tierly' | 'billd' | 'ogle' | 'wordly' | 'flippy' | 'inkly' | 'wordsy' | 'hue' | 'crossly' | 'hueology' | 'memely' | 'formly'
 
 // Single source of truth for the whole tool family. Add new tools here.
-const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: LucideIcon; gradient: string }[] = [
-  { key: 'poof', name: 'Poof', blurb: 'Remove image backgrounds', url: 'https://poof-eight.vercel.app', Icon: Wand2, gradient: 'from-violet-500 to-fuchsia-500' },
-  { key: 'capsy', name: 'Capsy', blurb: 'Auto-caption your videos', url: 'https://capsy-two.vercel.app', Icon: Captions, gradient: 'from-teal-500 to-cyan-500' },
-  { key: 'vanish', name: 'Vanish', blurb: 'Erase objects from photos', url: 'https://vanish-bice.vercel.app', Icon: Sparkles, gradient: 'from-fuchsia-500 to-pink-500' },
-  { key: 'embiggen', name: 'Embiggen', blurb: 'Upscale any image', url: 'https://embiggen.vercel.app', Icon: Maximize2, gradient: 'from-indigo-500 to-violet-500' },
+// eslint-disable-next-line react-refresh/only-export-components -- shared tool list, also read by ToolsDialog
+export const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Icon: LucideIcon; gradient: string }[] = [
+  { key: 'poof', name: 'Poof', blurb: 'Remove image backgrounds', url: 'https://doetra.com/image-background-remover', Icon: Wand2, gradient: 'from-violet-500 to-fuchsia-500' },
+  { key: 'capsy', name: 'Capsy', blurb: 'Auto-caption your videos', url: 'https://doetra.com/auto-subtitle-generator', Icon: Captions, gradient: 'from-teal-500 to-cyan-500' },
+  { key: 'vanish', name: 'Vanish', blurb: 'Erase objects from photos', url: 'https://doetra.com/remove-object-from-photo', Icon: Sparkles, gradient: 'from-fuchsia-500 to-pink-500' },
+  { key: 'embiggen', name: 'Embiggen', blurb: 'Upscale any image', url: 'https://doetra.com/image-upscaler', Icon: Maximize2, gradient: 'from-indigo-500 to-violet-500' },
   { key: 'aloud', name: 'Aloud', blurb: 'Read anything out loud', url: 'https://aloud-eta.vercel.app', Icon: AudioLines, gradient: 'from-amber-500 to-rose-500' },
-  { key: 'tabby', name: 'Tabby', blurb: 'Generate favicons', url: 'https://tabby-khaki.vercel.app', Icon: AppWindow, gradient: 'from-purple-500 to-indigo-500' },
-  { key: 'morph', name: 'Morph', blurb: 'Convert JSON/CSV/YAML', url: 'https://morph-mu.vercel.app', Icon: Braces, gradient: 'from-sky-500 to-blue-500' },
+  { key: 'tabby', name: 'Tabby', blurb: 'Generate favicons', url: 'https://doetra.com/favicon-generator', Icon: AppWindow, gradient: 'from-purple-500 to-indigo-500' },
+  { key: 'morph', name: 'Morph', blurb: 'Convert JSON/CSV/YAML', url: 'https://doetra.com/json-to-csv', Icon: Braces, gradient: 'from-sky-500 to-blue-500' },
   { key: 'scrub', name: 'Scrub', blurb: 'Strip photo metadata', url: 'https://scrub-delta.vercel.app', Icon: SprayCan, gradient: 'from-emerald-500 to-green-500' },
-  { key: 'snippy', name: 'Snippy', blurb: 'Beautiful code images', url: 'https://snippy-xi.vercel.app', Icon: Code2, gradient: 'from-rose-500 to-orange-500' },
+  { key: 'snippy', name: 'Snippy', blurb: 'Beautiful code images', url: 'https://doetra.com/code-screenshot-generator', Icon: Code2, gradient: 'from-rose-500 to-orange-500' },
   { key: 'glean', name: 'Glean', blurb: 'Extract text from images', url: 'https://glean-three.vercel.app', Icon: ScanText, gradient: 'from-yellow-500 to-lime-500' },
-  { key: 'unheic', name: 'Unheic', blurb: 'Convert HEIC to JPG/PNG', url: 'https://unheic-sigma.vercel.app', Icon: FileImage, gradient: 'from-orange-500 to-amber-500' },
-  { key: 'stamp', name: 'Stamp', blurb: 'Watermark your photos', url: 'https://stamp-henna-omega.vercel.app', Icon: Stamp, gradient: 'from-red-500 to-rose-600' },
-  { key: 'vexel', name: 'Vexel', blurb: 'Vectorize images to SVG', url: 'https://vexel-pi.vercel.app', Icon: Spline, gradient: 'from-cyan-500 to-blue-600' },
+  { key: 'unheic', name: 'Unheic', blurb: 'Convert HEIC to JPG/PNG', url: 'https://doetra.com/heic-to-jpg', Icon: FileImage, gradient: 'from-orange-500 to-amber-500' },
+  { key: 'stamp', name: 'Stamp', blurb: 'Watermark your photos', url: 'https://doetra.com/add-watermark-to-photo', Icon: Stamp, gradient: 'from-red-500 to-rose-600' },
+  { key: 'vexel', name: 'Vexel', blurb: 'Vectorize images to SVG', url: 'https://doetra.com/image-to-svg', Icon: Spline, gradient: 'from-cyan-500 to-blue-600' },
   { key: 'smudge', name: 'Smudge', blurb: 'Blur faces in photos', url: 'https://smudge-brown.vercel.app', Icon: ScanFace, gradient: 'from-indigo-500 to-purple-600' },
-  { key: 'quill', name: 'Quill', blurb: 'Sign & fill PDFs', url: 'https://quill-rho-mauve.vercel.app', Icon: FileSignature, gradient: 'from-emerald-500 to-teal-600' },
+  { key: 'quill', name: 'Quill', blurb: 'Edit any PDF', url: 'https://doetra.com/edit-pdf', Icon: FileSignature, gradient: 'from-emerald-500 to-teal-600' },
+  { key: 'formly', name: 'Formly', blurb: 'Job-form photo & signature resizer', url: 'https://doetra.com/teletalk-photo-resizer', Icon: IdCard, gradient: 'from-sky-500 to-cyan-600' },
   { key: 'pulse', name: 'Pulse', blurb: 'Score review sentiment', url: 'https://pulse-green-tau.vercel.app', Icon: Activity, gradient: 'from-rose-500 to-red-500' },
   { key: 'crux', name: 'Crux', blurb: 'Summarize any text', url: 'https://crux-self.vercel.app', Icon: AlignLeft, gradient: 'from-amber-500 to-orange-500' },
   { key: 'askdoc', name: 'Askdoc', blurb: 'Ask your documents', url: 'https://askdoc-mu.vercel.app', Icon: MessageCircleQuestion, gradient: 'from-teal-500 to-cyan-500' },
   { key: 'sift', name: 'Sift', blurb: 'Search files by meaning', url: 'https://sift-henna.vercel.app', Icon: FileSearch, gradient: 'from-slate-500 to-blue-500' },
   { key: 'doppel', name: 'Doppel', blurb: 'Find duplicate photos', url: 'https://doppel-ten.vercel.app', Icon: CopyCheck, gradient: 'from-pink-500 to-rose-500' },
-  { key: 'sticka', name: 'Sticka', blurb: 'Make chat stickers', url: 'https://sticka-henna.vercel.app', Icon: Sticker, gradient: 'from-teal-500 to-cyan-500' },
-  { key: 'chirp', name: 'Chirp', blurb: 'Beautify tweets & chats', url: 'https://chirp-kappa-gray.vercel.app', Icon: MessagesSquare, gradient: 'from-sky-500 to-blue-600' },
-  { key: 'qrio', name: 'Qrio', blurb: 'Custom QR codes', url: 'https://qrio-alpha.vercel.app', Icon: QrCode, gradient: 'from-violet-500 to-purple-600' },
-  { key: 'squish', name: 'Squish', blurb: 'Compress images', url: 'https://squish-nine.vercel.app', Icon: Minimize2, gradient: 'from-lime-500 to-emerald-500' },
-  { key: 'bezel', name: 'Bezel', blurb: 'Device mockups', url: 'https://bezel-mauve.vercel.app', Icon: MonitorSmartphone, gradient: 'from-zinc-500 to-slate-700' },
+  { key: 'sticka', name: 'Sticka', blurb: 'Make chat stickers', url: 'https://doetra.com/whatsapp-sticker-maker', Icon: Sticker, gradient: 'from-teal-500 to-cyan-500' },
+  { key: 'chirp', name: 'Chirp', blurb: 'Beautify tweets & chats', url: 'https://doetra.com/tweet-screenshot-generator', Icon: MessagesSquare, gradient: 'from-sky-500 to-blue-600' },
+  { key: 'qrio', name: 'Qrio', blurb: 'QR codes that never expire', url: 'https://doetra.com/qr-code-generator', Icon: QrCode, gradient: 'from-sky-500 to-cyan-700' },
+  { key: 'squish', name: 'Squish', blurb: 'Compress images', url: 'https://doetra.com/compress-image', Icon: Minimize2, gradient: 'from-lime-500 to-emerald-500' },
+  { key: 'bezel', name: 'Bezel', blurb: 'Device mockups', url: 'https://doetra.com/device-mockup-generator', Icon: MonitorSmartphone, gradient: 'from-zinc-500 to-slate-700' },
   { key: 'quotely', name: 'Quotely', blurb: 'Quote cards', url: 'https://quotely-two.vercel.app', Icon: Quote, gradient: 'from-amber-500 to-pink-500' },
   { key: 'tierly', name: 'Tierly', blurb: 'Make tier lists', url: 'https://tierly-five.vercel.app', Icon: ListOrdered, gradient: 'from-red-500 to-orange-500' },
   { key: 'billd', name: 'Billd', blurb: 'Free invoice generator', url: 'https://billd-xi.vercel.app', Icon: ReceiptText, gradient: 'from-indigo-500 to-blue-500' },
   { key: 'ogle', name: 'Ogle', blurb: 'Social share images', url: 'https://ogle-vert.vercel.app', Icon: ImageIcon, gradient: 'from-fuchsia-500 to-purple-600' },
   { key: 'wordly', name: 'Wordly', blurb: 'Make word clouds', url: 'https://wordly-nu.vercel.app', Icon: Cloud, gradient: 'from-teal-500 to-emerald-600' },
   { key: 'flippy', name: 'Flippy', blurb: 'Flashcards & quizzes', url: 'https://flippy-rose-theta.vercel.app', Icon: SquareStack, gradient: 'from-violet-500 to-indigo-600' },
-  { key: 'inkly', name: 'Inkly', blurb: 'Handwriting to font', url: 'https://inkly-weld-psi.vercel.app', Icon: PenLine, gradient: 'from-sky-500 to-cyan-500' },
+  { key: 'inkly', name: 'Inkly', blurb: 'Handwriting to font', url: 'https://doetra.com/handwriting-to-font', Icon: PenLine, gradient: 'from-sky-500 to-cyan-500' },
   { key: 'wordsy', name: 'Wordsy', blurb: 'Word-search puzzles', url: 'https://wordsy-pi.vercel.app', Icon: Grid3x3, gradient: 'from-purple-600 to-pink-500' },
-  { key: 'hue', name: 'Hue', blurb: 'Photos to coloring pages', url: 'https://hue-lyart.vercel.app', Icon: Palette, gradient: 'from-fuchsia-600 to-amber-500' },
+  { key: 'hue', name: 'Hue', blurb: 'Photos to coloring pages', url: 'https://doetra.com/photo-to-coloring-page', Icon: Palette, gradient: 'from-fuchsia-600 to-amber-500' },
   { key: 'crossly', name: 'Crossly', blurb: 'Make crossword puzzles', url: 'https://crossly-smoky.vercel.app', Icon: LayoutGrid, gradient: 'from-sky-600 to-indigo-600' },
   { key: 'hueology', name: 'Hueology', blurb: 'Color palettes from anything', url: 'https://hueology.vercel.app', Icon: SwatchBook, gradient: 'from-fuchsia-600 to-cyan-500' },
-  { key: 'memely', name: 'Memely', blurb: 'Make memes', url: 'https://memely-nine.vercel.app', Icon: Laugh, gradient: 'from-yellow-400 to-pink-600' },
+  { key: 'memely', name: 'Memely', blurb: 'Make memes', url: 'https://doetra.com/meme-generator', Icon: Laugh, gradient: 'from-yellow-400 to-pink-600' },
 ]
 
 export function MoreTools({ current }: { current: ToolKey }) {

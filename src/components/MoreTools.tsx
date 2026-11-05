@@ -20,7 +20,7 @@ export const TOOLS: { key: ToolKey; name: string; blurb: string; url: string; Ic
   { key: 'vexel', name: 'Vexel', blurb: 'Vectorize images to SVG', url: 'https://doetra.com/image-to-svg', Icon: Spline, gradient: 'from-cyan-500 to-blue-600' },
   { key: 'smudge', name: 'Smudge', blurb: 'Blur faces in photos', url: 'https://smudge-brown.vercel.app', Icon: ScanFace, gradient: 'from-indigo-500 to-purple-600' },
   { key: 'quill', name: 'Quill', blurb: 'Edit any PDF', url: 'https://doetra.com/edit-pdf', Icon: FileSignature, gradient: 'from-emerald-500 to-teal-600' },
-  { key: 'formly', name: 'Formly', blurb: 'Job-form photo & signature resizer', url: 'https://doetra.com/teletalk-photo-resizer', Icon: IdCard, gradient: 'from-sky-500 to-cyan-600' },
+  { key: 'formly', name: 'Formly', blurb: 'Job-form photo & signature resizer', url: 'https://doetra.com/photo-signature-resizer', Icon: IdCard, gradient: 'from-sky-500 to-cyan-600' },
   { key: 'pulse', name: 'Pulse', blurb: 'Score review sentiment', url: 'https://pulse-green-tau.vercel.app', Icon: Activity, gradient: 'from-rose-500 to-red-500' },
   { key: 'crux', name: 'Crux', blurb: 'Summarize any text', url: 'https://crux-self.vercel.app', Icon: AlignLeft, gradient: 'from-amber-500 to-orange-500' },
   { key: 'askdoc', name: 'Askdoc', blurb: 'Ask your documents', url: 'https://askdoc-mu.vercel.app', Icon: MessageCircleQuestion, gradient: 'from-teal-500 to-cyan-500' },
